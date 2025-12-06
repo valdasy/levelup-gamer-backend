@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/carrito")
-@CrossOrigin(origins = "*")
 @Tag(name = "Carrito", description = "API para gestión del carrito de compras")
 public class CarritoController {
     
