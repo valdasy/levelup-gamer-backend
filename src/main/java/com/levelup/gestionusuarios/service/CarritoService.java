@@ -41,27 +41,22 @@ public class CarritoService {
     
     public CarritoEntity agregarProducto(Long usuarioId, Long productoId, Integer cantidad) {
         CarritoEntity carrito = obtenerOCrearCarrito(usuarioId);
-        
         ProductoEntity producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
-        // Verificar stock
         if (producto.getStock() < cantidad) {
             throw new RuntimeException("Stock insuficiente");
         }
         
-        // Buscar si ya existe el item
         Optional<ItemCarritoEntity> itemExistente = 
                 itemCarritoRepository.findByCarritoIdAndProductoId(carrito.getId(), productoId);
         
         if (itemExistente.isPresent()) {
-            // Actualizar cantidad
             ItemCarritoEntity item = itemExistente.get();
             item.setCantidad(item.getCantidad() + cantidad);
             item.calcularSubtotal();
             itemCarritoRepository.save(item);
         } else {
-            // Crear nuevo item
             ItemCarritoEntity nuevoItem = new ItemCarritoEntity();
             nuevoItem.setCarrito(carrito);
             nuevoItem.setProducto(producto);
@@ -79,7 +74,6 @@ public class CarritoService {
     
     public CarritoEntity actualizarCantidad(Long usuarioId, Long itemId, Integer cantidad) {
         CarritoEntity carrito = obtenerOCrearCarrito(usuarioId);
-        
         ItemCarritoEntity item = itemCarritoRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item no encontrado"));
         
@@ -87,11 +81,9 @@ public class CarritoService {
             carrito.getItems().remove(item);
             itemCarritoRepository.delete(item);
         } else {
-            // Verificar stock
             if (item.getProducto().getStock() < cantidad) {
                 throw new RuntimeException("Stock insuficiente");
             }
-            
             item.setCantidad(cantidad);
             item.calcularSubtotal();
             itemCarritoRepository.save(item);
@@ -103,7 +95,6 @@ public class CarritoService {
     
     public CarritoEntity eliminarItem(Long usuarioId, Long itemId) {
         CarritoEntity carrito = obtenerOCrearCarrito(usuarioId);
-        
         ItemCarritoEntity item = itemCarritoRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item no encontrado"));
         

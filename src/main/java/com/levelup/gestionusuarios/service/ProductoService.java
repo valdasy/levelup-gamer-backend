@@ -48,7 +48,6 @@ public class ProductoService {
     }
     
     public ProductoEntity crear(ProductoEntity producto) {
-        // Validar que la categoría existe
         CategoriaEntity categoria = categoriaRepository.findById(producto.getCategoria().getId())
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
         
@@ -60,7 +59,6 @@ public class ProductoService {
         ProductoEntity producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
-        // Validar categoría si cambió
         if (!producto.getCategoria().getId().equals(productoActualizado.getCategoria().getId())) {
             CategoriaEntity categoria = categoriaRepository.findById(productoActualizado.getCategoria().getId())
                     .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));

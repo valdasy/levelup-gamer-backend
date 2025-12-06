@@ -15,11 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -50,46 +45,33 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    // CORS configuration
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Deshabilitamos CSRF (no necesario para APIs Stateless con JWT)
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // 🔥 CAMBIO CLAVE: Deshabilitamos CORS en el Backend.
+            // Ahora el API Gateway (puerto 8080) se encargará de los permisos.
+            .cors(cors -> cors.disable()) 
+            
             .authorizeHttpRequests(auth -> auth
-                // Auth público (login/registro)
+                // 1. Autenticación pública
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/usuarios/registro").permitAll()
 
-                // Productos públicos
-                .requestMatchers(HttpMethod.GET, "/api/productos/activos").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/destacados").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/*").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/categoria/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/productos/buscar").permitAll()
+                // 2. Catálogo público (Productos y Categorías)
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                
+                // 3. Carrito y Checkout (Temporalmente permitidos para evitar bloqueos en pruebas)
                 .requestMatchers("/api/carrito/**").permitAll()
+                .requestMatchers("/api/checkout/**").permitAll()
 
-
-                // Categorías públicas
-                .requestMatchers(HttpMethod.GET, "/api/categorias/activas").permitAll()
-
-                // Swagger
+                // 4. Documentación Swagger
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-                // Todo lo demás requiere autenticación
+                // Todo lo demás requiere token JWT
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
